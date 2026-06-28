@@ -6,6 +6,18 @@ Inspired by [@thekumarmethod](https://www.instagram.com/thekumarmethod/). This r
 
 ---
 
+## How to use this repo
+
+1. **Replace the image in `my-image/`** — swap `my-image/my-image.png` with your own portrait photo. This is the face used across every scene.
+2. **Replace the script in `script.md`** — write your speaking lines, one scene per block, with each scene separated by `---` on its own line.
+3. **Run the workflow in your AI editor:**
+   - **Cursor:** open Plan mode with `script.md`, review the plan, then Verify and Build.
+   - **Claude Code:** plan first using [`SKILL.md`](SKILL.md), then execute the steps it outlines.
+
+The agent reads your script, generates scene docs, restyled images, Seedance clips, and assembles the final intro video on the timeline.
+
+---
+
 ## What this repo covers
 
 | Step | Output |
