@@ -56,14 +56,14 @@ Speaking 001 → Pose+Music 002 → Speaking 003 → Pose+Music 004 → Speaking
 | 007 | speaking | "They will create stories…" | invent swagger pose (speaking style) | ~12 s |
 | 008 | pose_music | interstitial | invent swagger pose (luxury object setting) | 3 s |
 | 009 | speaking | "It will become irrelevant." | invent swagger pose (speaking style) | ~3 s |
-| 010 | tail | beat-sync montage | `tail_01.png`–`tail_06.png` | 13 s |
+| 010 | tail | beat-sync montage | `tail_01.png`–`tail_06.png` | 8 s |
 
 **Script parsing:** Read [`script.md`](script.md). Text before the first `---` and each block after `---` is one speaking scene. Insert a `pose_music` scene after every speaking scene except none before 001. Append one `tail` scene at the end.
 
 **Duration:**
 - Speaking: use `compute_speaking_scene_time(voiceover)` — **word count ÷ 2**, minimum **3 s** per clip. Delivery is **fast** — subject speaks briskly; still locked camera.
 - Pose: **3 s** (`--duration 3`). **Second 0–1:** subject starts looking away, turns to intense camera gaze, camera slowly zooms to face; luxury setting object visible; `repeatable-music.mp3` synced to beat. **Seconds 1–3:** fade to pure white and silence — music and motion stop; hold white through end of clip. Each pose scene uses a unique pose library ID and unique setting object.
-- Tail: **13 s** — matches `showcase-tail.mp3` exactly (`--duration 13`). **One video only** — all six tail poses live in a single montage clip; pose changes sync to music downbeats, not separate videos per pose.
+- Tail: **8 s** — matches `showcase-tail.mp3` exactly (`--duration 8`). **One video only** — all six tail poses live in a single montage clip; pose changes sync to music downbeats, not separate videos per pose.
 
 ### Speaking scene duration (`code.scene_time`)
 
@@ -224,7 +224,7 @@ When processing a script, discover and upload only the sources needed for that r
 |-----------|------------|-------------|
 | `subject_my_image` | `my-image/my-image.png` | always |
 | `audio_repeatable_music` | `audio/repeatable-music.mp3` | pose scenes (music in first 1 s of 3 s clip) |
-| `audio_showcase_tail` | `audio/showcase-tail.mp3` | tail scene (13 s) |
+| `audio_showcase_tail` | `audio/showcase-tail.mp3` | tail scene (8 s) |
 | `tpl_*` | `templates/<file>.png` | per scene template assignment |
 
 Upload each missing key, then append a row to Source Asset Registry in `production.md` and sync `registry.json` before image or video generation.
@@ -395,7 +395,7 @@ After each video: save locally, upload once, register as `scene_NNN_video_v01`.
 
 ### Step 4 — Timeline assembly
 
-Use `tft-cli-video-editor` skill. Alternate speaking clips (embedded voice) and pose clips (music in first second, then white/silent tail) with **no overlap**. One tail montage clip last, 13 s. All alternating pose scenes should be trimed to 1 second.
+Use `tft-cli-video-editor` skill. Alternate speaking clips (embedded voice) and pose clips (music in first second, then white/silent tail) with **no overlap**. One tail montage clip last, 8 s. All alternating pose scenes should be trimed to 1 second.
 
 ---
 
@@ -444,11 +444,11 @@ Creative specs for each scene type. Record these in `scene.md`; seedance2.0 skil
 |-------|-------|
 | Images | 6 tail frames + 2×3 storyboard + separate `tail_frame_01_v01` |
 | tail_03 | three stacked panels in reference; reveal top → middle → bottom on successive downbeats |
-| Video | one 13 s montage clip — not six separate videos |
+| Video | one 8 s montage clip — not six separate videos |
 | Inputs | first tail frame + storyboard + showcase tail audio |
 | Motion | pose change per storyboard cell on downbeats; rim-light flicker on beat |
 | Dialogue | none; do not transcribe lyrics |
-| Audio | `@Audio 1` = showcase tail; `--no-generate-audio`; `--duration 13` |
+| Audio | `@Audio 1` = showcase tail; `--no-generate-audio`; `--duration 8` |
 
 ---
 
@@ -522,7 +522,7 @@ avoid: dialogue, music after 0:01, repeated pose/setting across video
 
 ```yaml
 type: tail_montage
-duration: 13
+duration: 8
 shots: 1
 aspect_ratio: 9:16
 tags: { image_1: tail frame 01, image_2: storyboard, audio_1: showcase tail }
@@ -639,12 +639,12 @@ All three panels visible in final reference image (stacked layout).
 
 | Field | Value |
 |-------|-------|
-| Duration | 13 s (`showcase-tail.mp3`) |
+| Duration | 8 s (`showcase-tail.mp3`) |
 | Type | tail |
 | Templates | `tpl_tail_01`–`tpl_tail_06` |
 | Images | 6 face-swapped frames, 2×3 storyboard, separate frame 01 |
 | `tail_03` | Three-panel vertical stack in reference image; video reveals top → middle → bottom one by one on successive downbeats |
-| Seedance | **One** ref-to-video montage (13 s) with frame 01 + storyboard + tail audio — all six poses in a single clip |
+| Seedance | **One** ref-to-video montage (8 s) with frame 01 + storyboard + tail audio — all six poses in a single clip |
 | Effects | rim-light flicker on beat, pose change per storyboard cell on downbeats; tail_03 stacked panel sequential reveal |
 | Registry outputs | `scene_010_tail_frame_01_v01`, `scene_010_tail_frame_02_v01` … `_06`, `scene_010_tail_storyboard_v01`, `scene_010_video_v01` |
 
@@ -686,7 +686,7 @@ All three panels visible in final reference image (stacked layout).
 - [ ] All GPT Image 2 reference prompts include anti-scanline line (no horizontal scanlines, CRT, interlacing, or retro line overlay)
 - [ ] Every image and video is **9:16** and a **clear cinematic shot**
 - [ ] Pose clips: unique pose library ID + luxury setting object per scene (couch, car, etc.); look-away → intense gaze → slow zoom; music in 0:00–0:01, fade to white + silence 0:01–0:03
-- [ ] Tail = one 13 s montage with all six poses beat-synced; not separate videos per pose; `tail_03` three stacked panels reveal one by one (top → middle → bottom)
+- [ ] Tail = one 8 s montage with all six poses beat-synced; not separate videos per pose; `tail_03` three stacked panels reveal one by one (top → middle → bottom)
 - [ ] Seedance videos generated with correct model, `--aspect-ratio 9:16`, and audio flags per scene type
 - [ ] Speaking = in-video voice; pose/tail = reference music only; no overlap on timeline
 - [ ] All generated assets have local path + remote URL in registry
