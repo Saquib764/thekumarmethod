@@ -6,7 +6,7 @@ description: >-
   GPT Image 2 for face-swapped reference images from templates, Seedance 2.0
   for video, and an asset URL registry to avoid re-uploads. Use when working
   in video-03-thekumarmethod, generating scene docs, swagger pose images,
-  Seedance prompts, or assembling the Kumar Method intro timeline.
+  Seedance prompts, or assembling the Kumar Method intro timeline. Use 'tft-cli' and 'tft-cli-models' and 'tft-cli-video-editor' skills.
 ---
 
 # The Kumar Method — Intro Video Skill
