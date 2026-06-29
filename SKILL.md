@@ -283,7 +283,7 @@ After each video: save locally, upload once, register as `scene_NNN_video_v01`.
 
 ### Step 4 — Timeline assembly
 
-Use `tft-cli-video-editor` skill. Alternate speaking clips (embedded voice) and pose clips (music in first second, then white/silent tail) with **no overlap**. One tail montage clip last, 13 s. All alternating shot scene should be trimed to 1 second.
+Use `tft-cli-video-editor` skill. Alternate speaking clips (embedded voice) and pose clips (music in first second, then white/silent tail) with **no overlap**. One tail montage clip last, 13 s. All alternating pose scenes should be trimed to 1 second.
 
 ---
 
