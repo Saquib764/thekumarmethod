@@ -6,6 +6,53 @@ Inspired by [@thekumarmethod](https://www.instagram.com/thekumarmethod/). This r
 
 ---
 
+## Installation
+
+### Prerequisites
+
+- **Python 3.12+**
+- **[uv](https://docs.astral.sh/uv/)** — Python package and environment manager
+
+Install uv if you do not have it yet:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+### Setup
+
+1. **Clone the repository** and enter the project folder:
+
+```bash
+git clone https://github.com/Saquib764/thekumarmethod.git
+cd video-03-thekumarmethod
+```
+
+2. **Install dependencies** — creates a local `.venv` and installs `thefluxtrain-cli`:
+
+```bash
+uv sync
+```
+
+3. **Sign in to TheFluxTrain** (one-time browser auth):
+
+```bash
+uv run tft login
+```
+
+Open the link shown in the terminal, enter the device code, then return to the terminal when sign-in completes.
+
+4. **Verify the install:**
+
+```bash
+uv run tft --help
+uv run tft whoami
+```
+
+All CLI commands in this project should be run through `uv run` (for example `uv run tft files upload --file my-image/my-image.png`).
+
+---
+
 ## How to use this repo
 
 1. **Replace the image in `my-image/`** — swap `my-image/my-image.png` with your own portrait photo. This is the face used across every scene.

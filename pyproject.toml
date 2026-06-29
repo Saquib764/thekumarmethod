@@ -1,0 +1,24 @@
+[project]
+name = "the-kumar-method"
+version = "0.1.0"
+description = "Intro video production for The Kumar Method — speaking scenes with in-video voice, pose+music interstitials, and a beat-synced tail montage via Seedance 2.0 and GPT Image 2."
+readme = "README.md"
+authors = [
+    { name = "Saquib Alam", email = "saquib764@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "thefluxtrain-cli",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.2",
+]
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = []

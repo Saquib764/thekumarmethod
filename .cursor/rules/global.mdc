@@ -2,4 +2,9 @@
 alwaysApply: true
 ---
 
-Always use conda 'zustpy' environment in the terminal for all commands.
+Always use commands with 'uv' python environment in the terminal for all commands. All tft comman will use 'uv' environment.
+
+Example:
+```bash
+uv run tft --help
+```
