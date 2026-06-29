@@ -22,6 +22,7 @@ Creates an intro video for the person in `my-image/` with in-video voiceover and
 3. **No separate TTS.** Voice is generated inside Seedance video clips (`--generate-audio`). Do not call `tft audio-generate text-to-speech`.
 4. **Upload once, reuse URLs.** Look up [`production.md`](production.md) before every upload. Pass registry URLs to TFT — never local paths.
 5. **Audio separation:** speaking clips = voice only; pose clips = `repeatable-music.mp3` only; tail = `showcase-tail.mp3` only.
+6. **Minimum clip length:** every Seedance video must be **≥ 3 s** (`--duration 3` minimum).
 
 ---
 
@@ -35,22 +36,22 @@ Speaking 001 → Pose+Music 002 → Speaking 003 → Pose+Music 004 → Speaking
 | Scene | Type | Script / purpose | Template |
 |------|------|------------------|----------|
 | 001 | speaking | "This is a message to every legacy production house." | `speaking_01_start.png` + `speaking_01_end.png` | ~5 s |
-| 002 | pose_music | interstitial | `pose_01_start.png` | 1 s |
+| 002 | pose_music | interstitial | `pose_01_start.png` | 3 s |
 | 003 | speaking | "My name is Mohammad Saquib. I'm an AI engineer." | `speaking_02_reference.png` | ~6 s |
-| 004 | pose_music | interstitial | `pose_02_reference.png` | 1 s |
+| 004 | pose_music | interstitial | `pose_02_reference.png` | 3 s |
 | 005 | speaking | "And I'm building a product…" | invent swagger pose (speaking style) | ~10 s |
-| 006 | pose_music | interstitial | invent swagger pose (silhouette style) | 1 s |
+| 006 | pose_music | interstitial | invent swagger pose (silhouette style) | 3 s |
 | 007 | speaking | "They will create stories…" | invent swagger pose (speaking style) | ~12 s |
-| 008 | pose_music | interstitial | invent swagger pose (silhouette style) | 1 s |
+| 008 | pose_music | interstitial | invent swagger pose (silhouette style) | 3 s |
 | 009 | speaking | "It will become irrelevant." | invent swagger pose (speaking style) | ~3 s |
 | 010 | tail | beat-sync montage | `tail_01.png`–`tail_06.png` | 13 s |
 
 **Script parsing:** Read [`script.md`](script.md). Text before the first `---` and each block after `---` is one speaking scene. Insert a `pose_music` scene after every speaking scene except none before 001. Append one `tail` scene at the end.
 
 **Duration:**
-- Speaking: ~2.5 s per short sentence; count syllables (see seedance2.0 dialogue math).
-- Pose: **1 s** — matches `repeatable-music.mp3` exactly (`--duration 1`).
-- Tail: **13 s** — matches `showcase-tail.mp3` exactly (`--duration 13`).
+- Speaking: ~2.5 s per short sentence; count syllables (see seedance2.0 dialogue math). Minimum **3 s** per clip.
+- Pose: **3 s** (`--duration 3`). **Second 0–1:** subject holds swagger pose with `repeatable-music.mp3` synced to the beat. **Seconds 1–3:** fade to pure white and silence — music and motion stop; hold white through end of clip.
+- Tail: **13 s** — matches `showcase-tail.mp3` exactly (`--duration 13`). **One video only** — all six tail poses live in a single montage clip; pose changes sync to music downbeats, not separate videos per pose.
 
 ---
 
@@ -76,8 +77,9 @@ Extract and reuse these styles in every scene doc and prompt.
 ### Tail look
 
 - Same silhouette swagger style as pose scenes
+- **Single generated video** — all six tail poses in one montage clip, not one video per pose
 - Beat-synced pose changes; flickering rim light or background edge to sync with music
-- Six distinct swagger poses across storyboard frames
+- Six distinct swagger poses across storyboard frames; each change lands on a downbeat of `showcase-tail.mp3`
 
 ### Identity swap rules (all generated images)
 
@@ -163,7 +165,7 @@ When processing a script, discover and upload only the sources needed for that r
 | Asset key | Local path | When needed |
 |-----------|------------|-------------|
 | `subject_my_image` | `my-image/my-image.png` | always |
-| `audio_repeatable_music` | `audio/repeatable-music.mp3` | pose scenes (1 s) |
+| `audio_repeatable_music` | `audio/repeatable-music.mp3` | pose scenes (music in first 1 s of 3 s clip) |
 | `audio_showcase_tail` | `audio/showcase-tail.mp3` | tail scene (13 s) |
 | `tpl_*` | `templates/<file>.png` | per scene template assignment |
 
@@ -281,7 +283,7 @@ After each video: save locally, upload once, register as `scene_NNN_video_v01`.
 
 ### Step 4 — Timeline assembly
 
-Use [`tft-cli-video-editor`](../../.cursor/skills/tft-cli-video-editor/SKILL.md). Alternate speaking clips (embedded voice) and music-only pose clips with **no overlap**. Tail clip last, 13 s.
+Use `tft-cli-video-editor` skill. Alternate speaking clips (embedded voice) and pose clips (music in first second, then white/silent tail) with **no overlap**. One tail montage clip last, 13 s. All alternating shot scene should be trimed to 1 second.
 
 ---
 
@@ -303,14 +305,15 @@ Use [`tft-cli-video-editor`](../../.cursor/skills/tft-cli-video-editor/SKILL.md)
 ### Pose + music (002, 004, 006, 008)
 
 - **Image:** `reference_v01` from pose template or invented silhouette swagger pose
-- **Video:** 1 s clip; subject holds pose with subtle swagger movement; sync to `@Audio 1` (repeatable music, 1 s)
-- **No dialogue** in prompt; music drives clip
+- **Video:** **3 s** clip (`--duration 3`). **0:00–0:01:** subject holds swagger pose with subtle movement; `@Audio 1` (repeatable music) plays and drives the beat. **0:01–0:03:** fade to pure white; audio fades to silence; no motion — hold white through end.
+- **No dialogue** in prompt; music only in the first second
 
 ### Tail 010
 
 - **Images:** 6 frames + 2×3 storyboard grid + separate `tail_frame_01_v01`
+- **Video:** **one 13 s montage** — generate a single clip, not six separate pose videos
 - **Video inputs:** first frame + storyboard + showcase tail audio
-- **Video prompt:** describe each of 6 storyboard frames; flicker/strobe on rim light or background edge on beat; distinct swagger poses on downbeats; do not transcribe lyrics
+- **Video prompt:** describe each of 6 storyboard frames; pose changes on downbeats synced to `@Audio 1`; flicker/strobe on rim light or background edge on beat; do not transcribe lyrics
 
 ---
 
@@ -395,33 +398,36 @@ Use `--reference-image` = reference URL, `--generate-audio`.
 ### Seedance 2.0 — pose + music
 
 ```
-FORMAT: [N]s / 1 SHOTS / Swagger pose to music
+FORMAT: 3s / 1 SHOTS / Swagger pose then fade to white
 
 PRIMARY CHARACTER: @Image 1.
 
 SETTING: (@Image 1) minimalist rim-lit silhouette
 
-SOUNDTRACK: @Audio 1
+SOUNDTRACK: @Audio 1 (first second only, then silence)
 
 VISUAL STYLE: High-contrast rim light, photorealistic portrait
 
 CONTINUITY: Same pose family as @Image 1. Only one subject in frame.
 
-WHAT TO AVOID: dialogue, duplicate characters
+WHAT TO AVOID: dialogue, duplicate characters, music after 0:01
 
 ---
 
-SHOT 1 — 0:00 to 0:0[N].
+SHOT 1 — 0:00 to 0:03.
 MS, 85mm, slow orbit.
-@Image 1 holds swagger pose, direct eye contact with camera. Subtle confident micro-movements synced to rhythm of @Audio 1. Rim light pulses gently with the beat. No dialogue.
+0:00 to 0:01: @Image 1 holds swagger pose, direct eye contact with camera. Subtle confident micro-movements synced to rhythm of @Audio 1. Rim light pulses gently with the beat. No dialogue.
+0:01 to 0:03: subject and rim light fade smoothly to pure white. @Audio 1 fades to silence. Hold solid white, no motion, no sound through 0:03.
 ```
 
-Use `--reference-image` + `--reference-audio` (repeatable music), `--no-generate-audio`.
+Use `--reference-image` + `--reference-audio` (repeatable music), `--no-generate-audio`, `--duration 3`.
 
 ### Seedance 2.0 — tail montage
 
+Single video only — all six poses in one 13 s clip. Do not generate separate videos per tail pose.
+
 ```
-FORMAT: [N]s / 1 SHOTS / Beat-synced swagger montage
+FORMAT: 13s / 1 SHOTS / Beat-synced swagger montage
 
 PRIMARY CHARACTER: @Image 1.
 
@@ -431,18 +437,18 @@ SOUNDTRACK: @Audio 1
 
 VISUAL STYLE: High-contrast rim-lit silhouette montage, flickering light accents on beat
 
-CONTINUITY: Same subject identity across all six pose beats in @Image 2 storyboard.
+CONTINUITY: Same subject identity across all six pose beats in @Image 2 storyboard. One continuous montage — pose change on each downbeat.
 
-WHAT TO AVOID: dialogue, lyric transcription
+WHAT TO AVOID: dialogue, lyric transcription, separate clips per pose
 
 ---
 
-SHOT 1 — 0:00 to 0:0[N].
+SHOT 1 — 0:00 to 0:13.
 WS to MS montage, 50mm, dynamic cuts motivated by beat.
-@Image 1 cycles through six distinct swagger poses from @Image 2 storyboard — over-shoulder glance, hand to chin, clasped hands, profile rim-lit, forward lean, held hero frame. Rim light and background edge flicker on downbeats synced to @Audio 1. Direct camera eye contact in each pose. No dialogue.
+@Image 1 cycles through six distinct swagger poses from @Image 2 storyboard — over-shoulder glance, hand to chin, clasped hands, profile rim-lit, forward lean, held hero frame. Each pose change lands on a downbeat of @Audio 1. Rim light and background edge flicker on beat. Direct camera eye contact in each pose. No dialogue.
 ```
 
-Use `--reference-image` tail_frame_01 + storyboard + showcase tail audio, `--no-generate-audio`.
+Use `--reference-image` tail_frame_01 + storyboard + showcase tail audio, `--no-generate-audio`, `--duration 13`. Output: **one** `scene_010_video_v01` — not six pose clips.
 
 ---
 
@@ -469,9 +475,19 @@ Use `--reference-image` tail_frame_01 + storyboard + showcase tail audio, `--no-
 | Type | tail |
 | Templates | `tpl_tail_01`–`tpl_tail_06` |
 | Images | 6 face-swapped frames, 2×3 storyboard, separate frame 01 |
-| Seedance | ref-to-video with frame 01 + storyboard + tail audio |
-| Effects | rim-light flicker on beat, pose change per storyboard cell |
+| Seedance | **One** ref-to-video montage (13 s) with frame 01 + storyboard + tail audio — all six poses in a single clip |
+| Effects | rim-light flicker on beat, pose change per storyboard cell on downbeats |
 | Registry outputs | `scene_010_tail_frame_01_v01`, `scene_010_tail_frame_02_v01` … `_06`, `scene_010_tail_storyboard_v01`, `scene_010_video_v01` |
+
+### Pose scene (002, 004, 006, 008)
+
+| Field | Value |
+|-------|-------|
+| Duration | 3 s (`--duration 3`) |
+| Type | pose_music |
+| Beat structure | 0:00–0:01 pose + `repeatable-music.mp3`; 0:01–0:03 fade to white + silence |
+| Seedance | ref-to-video with reference image + repeatable music, `--no-generate-audio` |
+| Registry outputs | `scene_NNN_reference_v01`, `scene_NNN_video_v01` |
 
 ---
 
@@ -491,6 +507,8 @@ Use `--reference-image` tail_frame_01 + storyboard + showcase tail audio, `--no-
 - [ ] `scene-doc.md` and `scenes/scene_NNN/` created from script parse
 - [ ] Per-scene `scene.md` with swagger metadata and registry cross-refs
 - [ ] GPT Image 2 references generated; URLs registered (no duplicate uploads)
+- [ ] Seedance videos ≥ 3 s; pose clips = pose + music in 0:00–0:01, fade to white + silence 0:01–0:03
+- [ ] Tail = one 13 s montage with all six poses beat-synced; not separate videos per pose
 - [ ] Seedance videos generated with correct model and audio flags per scene type
 - [ ] Speaking = in-video voice; pose/tail = reference music only; no overlap on timeline
 - [ ] All generated assets have local path + remote URL in registry
