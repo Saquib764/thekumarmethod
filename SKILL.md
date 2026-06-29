@@ -28,10 +28,13 @@ Creates an intro video for the person in `my-image/` with in-video voiceover and
 5. **Audio separation:** speaking clips = voice only; pose clips = `repeatable-music.mp3` only; tail = `showcase-tail.mp3` only.
 6. **Minimum clip length:** every Seedance video must be **≥ 3 s** (`--duration 3` minimum).
 7. **Aspect ratio:** every image and video is **9:16** (vertical portrait). Pass `--aspect-ratio 9:16` on all `tft image-generate` and `tft video-generate` commands unless the CLI defaults to it.
-8. **Cinematic clarity:** every clip is a **clear cinematic shot** — sharp focus, clean composition, intentional lighting, no blur, grain overload, or muddy exposure.
+8. **Cinematic clarity:** every clip is a **clear cinematic shot** — sharp focus, clean composition, intentional lighting, no blur, grain overload, muddy exposure, or horizontal scanline/CRT/interlacing artifacts.
 9. **No Python orchestration.** Do not write Python scripts to batch-generate assets. Use **parallel Cursor subagents** (Task tool) to generate images concurrently.
 10. **Image prompt tags.** GPT Image 2 prompts use `@Image 1`, `@Image 2` — never local paths or filenames. Video prompt formatting is handled entirely by the seedance2.0 skill.
 11. **Seedance prompts via skill, not CLI.** Do **not** run `tft video-generate create-prompt`. For each scene, read the **Seedance scene brief** (below + `scene.md`), then follow [`.cursor/skills/seedance2.0/SKILL.md`](.cursor/skills/seedance2.0/SKILL.md) to write `prompts/seedance_prompt_v01.txt`. Pass that file to `tft video-generate generate --prompt`.
+12. **Speaking 003+ background text in reference images:** GPT Image 2 reference images for `speaking_02_reference` and later speaking scenes must show **one impactful word** from that scene's voiceover in large bold red background text — **font extracted from the template reference image**, not named or invented. **Not** the full script line. Pick a single high-impact word from the line: a **name**, **action verb** (e.g. act, build, create), or **designation/title** (e.g. engineer). Video still animates the full script word-by-word.
+13. **Speaking 003+ voiceover reference image (spelling guide):** For every speaking scene from `speaking_02_reference` onward (scenes 003, 005, 007, 009), generate a separate **`voiceover_reference_v01.png`** showing the **full voiceover sentence** on a **pure white background** in **bold red** — **font extracted from `templates/speaking_02_reference.png`**, not named or invented. Pass this image as a **second `--reference-image`** at video generation so Seedance spells each word correctly during the one-word-at-a-time reveal.
+14. **Reference images: no scanlines.** Every GPT Image 2 reference image prompt must explicitly remove horizontal scanlines, CRT lines, interlacing, and retro line overlays. GPT Image 2 often copies these from templates — instruct it **not** to. Use the anti-artifact line in every image prompt template below.
 
 ---
 
@@ -46,7 +49,7 @@ Speaking 001 → Pose+Music 002 → Speaking 003 → Pose+Music 004 → Speaking
 |------|------|------------------|----------|
 | 001 | speaking | "This is a message to every legacy production house." | `speaking_01_start.png` + `speaking_01_end.png` | ~5 s |
 | 002 | pose_music | interstitial | `pose_01_start.png` | 3 s |
-| 003 | speaking | "My name is Mohammad Saquib. I'm an AI engineer." | `speaking_02_reference.png` | ~6 s |
+| 003 | speaking | "My name is Mohammad Kumar. I'm an AI engineer." | `speaking_02_reference.png` | ~6 s |
 | 004 | pose_music | interstitial | `pose_02_reference.png` | 3 s |
 | 005 | speaking | "And I'm building a product…" | invent swagger pose (speaking style) | ~10 s |
 | 006 | pose_music | interstitial | invent swagger pose (luxury object setting) | 3 s |
@@ -58,9 +61,19 @@ Speaking 001 → Pose+Music 002 → Speaking 003 → Pose+Music 004 → Speaking
 **Script parsing:** Read [`script.md`](script.md). Text before the first `---` and each block after `---` is one speaking scene. Insert a `pose_music` scene after every speaking scene except none before 001. Append one `tail` scene at the end.
 
 **Duration:**
-- Speaking: ~1.7 s per short sentence; count syllables. Minimum **3 s** per clip. Delivery is **fast** — subject speaks briskly; still locked camera.
+- Speaking: use `compute_speaking_scene_time(voiceover)` — **word count ÷ 2**, minimum **3 s** per clip. Delivery is **fast** — subject speaks briskly; still locked camera.
 - Pose: **3 s** (`--duration 3`). **Second 0–1:** subject starts looking away, turns to intense camera gaze, camera slowly zooms to face; luxury setting object visible; `repeatable-music.mp3` synced to beat. **Seconds 1–3:** fade to pure white and silence — music and motion stop; hold white through end of clip. Each pose scene uses a unique pose library ID and unique setting object.
 - Tail: **13 s** — matches `showcase-tail.mp3` exactly (`--duration 13`). **One video only** — all six tail poses live in a single montage clip; pose changes sync to music downbeats, not separate videos per pose.
+
+### Speaking scene duration (`code.scene_time`)
+
+For every **speaking** scene, set `--duration` from the scene's voiceover line (exact text from `script.md`):
+
+```python
+from code.scene_time import compute_speaking_scene_time
+
+duration = compute_speaking_scene_time(voiceover)  # word_count / 2; max(3, …)
+```
 
 ---
 
@@ -80,9 +93,10 @@ Extract and reuse these styles in every scene doc and prompt.
 - Background (default): vintage US wall map, Steve Jobs B&W portrait, desk lamp, keyboard, phone
 - **Camera:** locked tripod — **still shot** throughout; no pan, tilt, dolly, or orbit
 - **Delivery:** subject speaks **fast** — brisk, confident pace; dialogue must fit duration without dragging
-- On-screen text: bold red sans-serif
-  - Scene 001 only: words append **in front of** chest (start = first word only; end = full sentence)
-  - Scenes 003–009: words appear **in the background behind** the subject — voiceover script revealed **one word at a time**, each word syncing exactly with the spoken line in the video (reference image = final full-line layout)
+- On-screen text: bold red; **font extracted from the scene template reference image** — never name or invent a typeface
+  - Scene 001 only: words append **in front of** chest (start = first word only; end = full sentence); font from `speaking_01_start` / `speaking_01_end` templates
+  - Scenes 003–009 (`speaking_02_reference` and later speaking): bold red **one impactful word** in the **background behind** the subject — **not** the full script line; font from `speaking_02_reference` template. Per scene, select a single big, high-impact word from that scene's voiceover: a **name** (e.g. `Kumar`), **action verb** (e.g. `act`, `build`, `create`), or **designation** (e.g. `engineer`). Record the chosen word as `background_text` in `scene.md`. Video still reveals the **full script line** one word at a time synced to voiceover; the reference image shows only the chosen word as the static background text layout.
+  - **Voiceover spelling reference** (scenes 003+ only): a separate `voiceover_reference_v01.png` per speaking scene — **full script line** on **pure white background**, **bold red** text with **font extracted from `speaking_02_reference.png`**. No subject, no desk, no background props — text only. Used at video generation as `@Image 2` to lock correct spelling for the word-by-word on-screen text effect.
 
 ### Pose look (luxury swagger)
 
@@ -162,6 +176,7 @@ video-03-thekumarmethod/
         ├── scene.md
         ├── images/
         │   ├── reference_v01.png
+        │   ├── voiceover_reference_v01.png   # speaking 003+ only — full line spelling guide
         │   ├── start_v01.png       # scene 001 only
         │   ├── end_v01.png         # scene 001 only
         │   └── image_prompt_v01.txt
@@ -182,9 +197,10 @@ video-03-thekumarmethod/
 | `audio_*` | `audio_repeatable_music` | Source audio |
 | `tpl_*` | `tpl_speaking_01_start` | Template images |
 | `scene_NNN_*_vNN` | `scene_001_start_v01` | Generated images |
+| `scene_NNN_voiceover_reference_vNN` | `scene_003_voiceover_reference_v01` | Speaking 003+ spelling guide |
 | `scene_NNN_video_vNN` | `scene_001_video_v01` | Generated videos |
 
-Roles for generated images: `reference`, `start`, `end`, `tail_frame_NN`, `tail_storyboard`.
+Roles for generated images: `reference`, `voiceover_reference`, `start`, `end`, `tail_frame_NN`, `tail_storyboard`.
 
 ---
 
@@ -237,7 +253,7 @@ Upload each missing key, then append a row to Source Asset Registry in `producti
 
 **Only when `script.md` is non-empty.** If the script has no speaking lines, stop and ask the user to add content.
 
-1. Parse `script.md` — speaking blocks, interstitial pose scenes, tail scene.
+1. Parse `script.md` — speaking blocks, interstitial pose scenes, tail scene. For each speaking scene 003+, **assign one impactful background word** from that scene's voiceover (name, action verb, or designation) for `speaking_02`+ reference images, and note the **full script line** for `voiceover_reference_v01` spelling guide.
 2. Assign templates per scene; list required `tpl_*` keys for this script.
 3. **Register source assets:** upload `subject_my_image`, both audio files, and each required template. Append rows to Source Asset Registry in `production.md`; sync `registry.json`. Reuse existing URLs — do not re-upload.
 4. Create [`scene-doc.md`](scene-doc.md) with scene index and `scenes/scene_NNN/scene.md` per scene.
@@ -264,6 +280,8 @@ Create `scenes/scene_NNN/scene.md` for each scene with pose description, `pose_s
 
 Resolve URLs from registry: `subject_my_image` + relevant `tpl_*`. Do not re-upload sources.
 
+**Scanline removal:** GPT Image 2 often copies horizontal scanlines/CRT artifacts from templates into outputs. Every reference image prompt **must** include the anti-artifact line (see **Image prompt templates**). Instruct the model to strip scanlines from `@Image 1` — do not reproduce them.
+
 **Generate all images in parallel** — do not serialize scene-by-scene. Launch multiple Cursor subagents (Task tool) at once, one batch per independent image job. Do **not** write Python scripts or shell loops to orchestrate generation.
 
 **Parallel batch plan (launch all subagents in one turn):**
@@ -271,10 +289,10 @@ Resolve URLs from registry: `subject_my_image` + relevant `tpl_*`. Do not re-upl
 | Subagent | Images to generate |
 |----------|-------------------|
 | Agent A | Scene 001: `start_v01`, `end_v01` |
-| Agent B | Scene 003: `reference_v01` |
-| Agent C | Scene 005: `reference_v01` |
-| Agent D | Scene 007: `reference_v01` |
-| Agent E | Scene 009: `reference_v01` |
+| Agent B | Scene 003: `reference_v01` + `voiceover_reference_v01` |
+| Agent C | Scene 005: `reference_v01` + `voiceover_reference_v01` |
+| Agent D | Scene 007: `reference_v01` + `voiceover_reference_v01` |
+| Agent E | Scene 009: `reference_v01` + `voiceover_reference_v01` |
 | Agent F | Scene 002: `reference_v01` (pose library ID) |
 | Agent G | Scene 004: `reference_v01` (pose library ID) |
 | Agent H | Scene 006: `reference_v01` (pose library ID) |
@@ -298,6 +316,7 @@ tft image-generate generate \
 9:16 vertical portrait. Same pose, framing, lighting, wardrobe, and background as @Image 1.
 Replace face with subject from @Image 2. Match medium-brown skin tone from @Image 2.
 Clear cinematic shot, sharp focus, clean composition.
+Clean digital image — no horizontal scanlines, no CRT or interlacing artifacts, no retro line overlay. If @Image 1 has scanlines, remove them; do not copy.
 Direct eye contact with camera, calm swagger authority.
 Do not change body pose, limb positions, or camera framing.
 [USER BACKGROUND OVERRIDE if specified]
@@ -316,7 +335,9 @@ After each generated image: save locally, upload once, register as `scene_NNN_<r
 
 **Scene 001:** generate `start_v01` (first word on chest) and `end_v01` (full sentence) from `tpl_speaking_01_start` / `tpl_speaking_01_end`.
 
-**Scenes 003–009:** generate `reference_v01` from assigned template or invented swagger pose. Reference image shows **final background text layout** (full script line behind subject) for speaking scenes 003+.
+**Scenes 003–009:** generate `reference_v01` from assigned template or invented swagger pose. Reference image background text = **one impactful word** from that scene's voiceover (name, action verb, or designation), large bold red behind subject — **font extracted from template reference image** — **never** the full script line. Record `background_text: [word]` in `scene.md`.
+
+**Scenes 003–009 — voiceover spelling reference:** generate `voiceover_reference_v01` for each speaking scene. Use `tpl_speaking_02_reference` as `@Image 1` to **extract the font** — do not name or invent a typeface. Output = **full voiceover sentence** on **pure white background**, bold red text only, centered or stacked to fit 9:16. Register as `scene_NNN_voiceover_reference_v01`. This image is **not** a face swap; it exists solely to guide correct spelling at video generation.
 
 **Pose scenes 002, 004, 006, 008:** generate `reference_v01` from template or pose library entry — include the **luxury setting object** (couch, car front, etc.) from `pose_setting`; image captures **end state** (intense direct gaze, pose locked, setting visible, ready for slow zoom).
 
@@ -333,7 +354,7 @@ After each generated image: save locally, upload once, register as `scene_NNN_<r
 | Scene type | Model | Registry inputs | Audio |
 |------------|-------|-----------------|-------|
 | 001 speaking | `seedance-2.0-image-to-video` | `scene_001_start_v01`, `scene_001_end_v01` | `--generate-audio` |
-| 003–009 speaking | `seedance-2.0-reference-to-video` | `scene_NNN_reference_v01` | `--generate-audio` |
+| 003–009 speaking | `seedance-2.0-reference-to-video` | `scene_NNN_reference_v01`, `scene_NNN_voiceover_reference_v01` | `--generate-audio` |
 | 002–008 pose | `seedance-2.0-reference-to-video` | `scene_NNN_reference_v01`, `audio_repeatable_music` | `--no-generate-audio` |
 | 010 tail | `seedance-2.0-reference-to-video` | `scene_010_tail_frame_01_v01`, `scene_010_tail_storyboard_v01`, `audio_showcase_tail` | `--no-generate-audio` |
 
@@ -351,7 +372,16 @@ tft video-generate generate \
   --image START_URL --last-frame END_URL \
   --prompt "$(cat scenes/scene_001/prompts/seedance_prompt_v01.txt)" --duration N
 
-# Speaking 003+ / pose / tail — reference to video
+# Speaking 003+ — reference to video (two reference images: scene + spelling guide)
+tft video-generate generate \
+  --model seedance-2.0-reference-to-video \
+  --aspect-ratio 9:16 \
+  --reference-image REF_URL \
+  --reference-image VOICEOVER_REF_URL \
+  --generate-audio \
+  --prompt "$(cat scenes/scene_NNN/prompts/seedance_prompt_v01.txt)" --duration N
+
+# Pose / tail — reference to video
 tft video-generate generate \
   --model seedance-2.0-reference-to-video \
   --aspect-ratio 9:16 \
@@ -389,12 +419,13 @@ Creative specs for each scene type. Record these in `scene.md`; seedance2.0 skil
 
 | Field | Value |
 |-------|-------|
-| Image | `reference_v01` = final background text layout behind subject |
+| Images | `reference_v01` = background text layout behind subject (**one impactful word** from voiceover); `voiceover_reference_v01` = **full script line** on white background (spelling guide) |
 | Script | exact line from `script.md` |
-| Text | background red sans-serif, one word at a time synced to voiceover |
+| Text | background bold red text (font from template reference); reference image = **one impactful word** (name, action, or designation); video animates **full script** one word at a time synced to voiceover; **spelling locked from `voiceover_reference_v01`** (`@Image 2`, font extracted from `speaking_02_reference`) |
 | Camera | locked still tripod |
 | Delivery | fast brisk pace |
 | Audio | `--generate-audio` |
+| Video refs | `--reference-image` scene ref, then `--reference-image` voiceover ref (order matters for `@Image 1` / `@Image 2` tags) |
 
 ### Pose + music (002, 004, 006, 008)
 
@@ -430,7 +461,7 @@ Content-only inputs for the seedance2.0 skill. Include a `## Seedance brief` blo
 | Scene type | `@Image 1` | `@Image 2` | `@Audio 1` |
 |------------|------------|------------|------------|
 | 001 speaking I2V | Start frame (`--image`) | — | — |
-| 003–009 speaking | Reference frame | — | — |
+| 003–009 speaking | Reference frame (scene) | Voiceover spelling reference (full line on white) | — |
 | 002–008 pose | Reference frame | — | Repeatable music |
 | 010 tail | First tail frame | Storyboard grid | Showcase tail music |
 
@@ -438,7 +469,7 @@ Content-only inputs for the seedance2.0 skill. Include a `## Seedance brief` blo
 
 ```yaml
 type: speaking_i2v
-duration: ~5
+duration: compute_speaking_scene_time(voiceover)
 shots: 1
 aspect_ratio: 9:16
 script: "[exact line from script.md]"
@@ -446,7 +477,7 @@ tags: { image_1: start frame }
 audio: generate_in_video
 content:
   - MCU seated desk, steepled hands, office thought-leader look
-  - red sans-serif text on chest, word-by-word from first word to full line, synced to speech
+  - red text on chest, font from start/end templates, word-by-word from first word to full line, synced to speech
   - locked tripod, fast brisk delivery, direct swagger eye contact
 avoid: duplicate characters, pose drift, background music, camera movement
 ```
@@ -455,17 +486,19 @@ avoid: duplicate characters, pose drift, background music, camera movement
 
 ```yaml
 type: speaking_ref
-duration: [from syllable count, min 3]
+duration: compute_speaking_scene_time(voiceover)
 shots: 1
 aspect_ratio: 9:16
 script: "[exact line from script.md]"
-tags: { image_1: reference frame }
+tags: { image_1: reference frame, image_2: voiceover spelling reference }
 audio: generate_in_video
 content:
   - MCU locked tripod, fast brisk delivery
-  - red sans-serif text in background behind subject, one word at a time synced to voiceover
-  - final text layout matches reference image
-avoid: foreground chest text, camera movement, slow delivery
+  - bold red text in background behind subject, font extracted from scene reference image, one word at a time synced to voiceover (full script)
+  - @Image 2 (voiceover reference) locks exact spelling of every word — match letter-for-letter as words appear
+  - reference image (@Image 1) background shows one impactful word from voiceover only (name, action verb, or designation — not full line)
+  - final on-screen text layout for background matches reference image (chosen word)
+avoid: foreground chest text, camera movement, slow delivery, full script line in scene reference image background, misspelled on-screen text
 ```
 
 ### Brief — pose + music
@@ -507,6 +540,12 @@ avoid: dialogue, lyric transcription, separate clips per pose, tail_03 panels al
 
 All image prompts use `@Image N` tags only — never local paths or filenames.
 
+**Anti-artifact line (required in every GPT Image 2 reference prompt):**
+
+```
+Clean digital image — no horizontal scanlines, no CRT or interlacing artifacts, no retro line overlay. If @Image 1 has scanlines, remove them; do not copy.
+```
+
 ### GPT Image 2 — face swap (speaking)
 
 ```
@@ -515,11 +554,35 @@ Same pose, framing, lighting, wardrobe, and background as @Image 1.
 Replace face with subject from @Image 2: medium-brown skin, dark hair with voluminous quiff,
 mustache and pointed goatee, oval face, direct confident gaze.
 Seated at desk, steepled hands at chest, black ribbed turtleneck.
-Bold red sans-serif text: "[FULL SCRIPT LINE or FIRST WORD ONLY]"
-  - Scene 001 start/end: text on chest in foreground
-  - Scenes 003+: full script line in background behind subject (reference = final word layout)
+Clean digital image — no horizontal scanlines, no CRT or interlacing artifacts, no retro line overlay. If @Image 1 has scanlines, remove them; do not copy.
+Bold red text: "[TEXT PER SCENE]" — font extracted from @Image 1 template; do not name or invent a typeface
+  - Scene 001 start/end: text on chest in foreground (first word / full line)
+  - Scenes 003+ (speaking_02 and later): **one impactful word** from that scene's voiceover in background behind subject (name, action verb, or designation — e.g. `Kumar`, `build`, `engineer`) — never the full script line
 Do not change body pose or camera framing.
 ```
+
+### GPT Image 2 — voiceover spelling reference (speaking 003+)
+
+Generate one per speaking scene from `speaking_02_reference` onward. **Not** a face swap — text-only spelling guide for video generation.
+
+```
+9:16 vertical portrait. Pure white background — no subject, no desk, no props, no map, no lamp.
+Clean digital image — no horizontal scanlines, no CRT or interlacing artifacts, no retro line overlay.
+Bold red text — extract the exact font from @Image 1 (speaking_02_reference template). Do not name or invent a typeface.
+Display the full voiceover sentence exactly as written:
+"[EXACT SCRIPT LINE FROM script.md]"
+Text centered or stacked to fit frame. Large, legible, high contrast red on white.
+Every word spelled correctly — this image is the spelling authority for video generation.
+Do not add any imagery beyond the text.
+```
+
+**`@Image` assignment:**
+
+| Flag order | Tag | Role |
+|------------|-----|------|
+| 1st `--input-image` | `@Image 1` | `tpl_speaking_02_reference` — font style source |
+
+No subject image (`@Image 2`) needed for voiceover reference generation.
 
 ### GPT Image 2 — pose (face swap)
 
@@ -529,6 +592,7 @@ Same pose, framing, rim lighting, and composition as @Image 1.
 Replace face with subject from @Image 2: medium-brown skin, dark hair with quiff,
 mustache and goatee. End-state: intense direct eye contact with camera, confident authority.
 Black ribbed turtleneck.
+Clean digital image — no horizontal scanlines, no CRT or interlacing artifacts, no retro line overlay. If @Image 1 has scanlines, remove them; do not copy.
 Pose library [P0N]: [pose area from library table].
 Setting: [luxury object from library — e.g. deep leather couch, front of expensive sports car,
 private jet seat, penthouse balcony]. Subject integrated with setting, visible in frame.
@@ -543,6 +607,7 @@ Do not change body pose, limb positions, or camera framing.
 Same pose, framing, rim lighting, and composition as @Image 1.
 Replace face with subject from @Image 2. Match skin tone from @Image 2.
 High-contrast cinematic portrait.
+Clean digital image — no horizontal scanlines, no CRT or interlacing artifacts, no retro line overlay. If @Image 1 has scanlines, remove them; do not copy.
 Pose: [describe visible pose and framing from @Image 1].
 
 For third tail frame only (three-panel vertical stack in @Image 1):
@@ -618,10 +683,15 @@ All three panels visible in final reference image (stacked layout).
 - [ ] Each `scene.md` includes a `## Seedance brief` block per **Seedance scene briefs** section
 - [ ] `seedance_prompt_v01.txt` written via **seedance2.0 skill** only (not `tft create-prompt`)
 - [ ] All GPT Image 2 prompts use `@Image N` only — no local paths or filenames
+- [ ] All GPT Image 2 reference prompts include anti-scanline line (no horizontal scanlines, CRT, interlacing, or retro line overlay)
 - [ ] Every image and video is **9:16** and a **clear cinematic shot**
 - [ ] Pose clips: unique pose library ID + luxury setting object per scene (couch, car, etc.); look-away → intense gaze → slow zoom; music in 0:00–0:01, fade to white + silence 0:01–0:03
 - [ ] Tail = one 13 s montage with all six poses beat-synced; not separate videos per pose; `tail_03` three stacked panels reveal one by one (top → middle → bottom)
 - [ ] Seedance videos generated with correct model, `--aspect-ratio 9:16`, and audio flags per scene type
 - [ ] Speaking = in-video voice; pose/tail = reference music only; no overlap on timeline
 - [ ] All generated assets have local path + remote URL in registry
+- [ ] Speaking 003+ reference images: background text = **one impactful word** from voiceover (name, action, or designation), not full script line
+- [ ] Speaking 003+ `voiceover_reference_v01` generated per scene — full script line on white background, bold red text with font extracted from `speaking_02_reference`; registered and uploaded
+- [ ] Speaking 003+ video generation passes **both** `scene_NNN_reference_v01` and `scene_NNN_voiceover_reference_v01` as `--reference-image` (scene first, voiceover second)
+- [ ] Seedance brief for speaking 003+ includes `image_2: voiceover spelling reference` and prompt instructs letter-for-letter spelling from `@Image 2`
 - [ ] Timeline assembled in scene order

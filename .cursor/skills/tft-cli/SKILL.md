@@ -177,6 +177,71 @@ tft video-editor get --project-id PID --output json -v
 
 ---
 
+## Response structure
+
+Every manifest command prints JSON to stdout (default `--output json`). Parse the envelope first, then read fields inside `data`.
+
+### Envelope
+
+```json
+{
+  "data": { ... },
+  "error": null
+}
+```
+
+| Key | On success | On failure |
+|-----|------------|------------|
+| `data` | Command payload — fields below | `null` |
+| `error` | `null` | `{ "code": "...", "message": "..." }` |
+
+Use `--output yaml` when nesting is easier to scan. Run `tft <group> <command> --help` — each command has a **Response** section listing the `data` fields to extract.
+
+### Sync vs async
+
+| Pattern | Commands | What to read |
+|---------|----------|--------------|
+| **Sync** — result ready immediately | `files upload`, all `image-generate`, most `audio-generate`, `video-generate create-prompt`, `flow-studio`, `video-render`, `video-editor`, `characters` | Read `data.url`, `data.prompt`, `data.flow_id`, etc. directly |
+| **Async** — poll until done | `video-generate generate`, `motion-control animate`, `audio-generate dubbing-start` | First response: `data.id`, `data.status` (`"PROCESSING"`). Poll `tft jobs check-status --editor-id data.id` until `data.status` is `"SUCCESS"`, then read `data.url` |
+
+### Key fields by workflow
+
+**Upload → generate**
+- `files upload` → `data.url` → pass to `--input-image`, `--image`, `--video`, `--audio-url`, `cloudUrl`, or character preview flags
+
+**Async video / motion / dub**
+- Generation command → `data.id` → `jobs check-status` → `data.url` when `data.status` is `"SUCCESS"`
+
+**Video prompt**
+- `video-generate create-prompt` → `data.prompt` → `video-generate generate --prompt "..."`
+
+**Character bible**
+- `characters create` → `data.character_id`
+- `characters generate-preview` → `data.preview_url`
+- `characters sheet-prompt` → `data.prompt`
+- `characters generate-sheet` → `data.sheet_url`
+
+**Flow Studio**
+- `flow-studio list` → `data.flows[].id`
+- `flow-studio create` → `data.flow_id`
+- `flow-studio nodes` → `data.nodes[].id` (definitionId), port ids in `inputs` / `outputs`
+- `flow-studio apply` → `data.flow.nodes[].id`, `data.flow.nodes[].inputs`
+
+**Video editor**
+- `video-editor create` → `data.project_id`
+- `video-editor apply-asset` → `data.project.mediaLibrary[].id` (reuse as `sourceAssetId`)
+- `media info` → `data.width`, `data.height`, `data.duration` (for `createAsset`)
+
+**Audio voices**
+- `audio-generate voices` → `data.voices[].id` → `--voice-id`
+
+**Frame extraction**
+- `video-render extract-frames` → `data.start`, `data.end`, `data.timestamps[]` (PNG URLs)
+
+For the full per-command field list, use `tft <group> <command> --help` (Response section) or `tft commands` (agent guide summary).
+
+---
+
 ## Command group router
 
 Map the creator's goal to the right group and skill:
@@ -188,6 +253,8 @@ Map the creator's goal to the right group and skill:
 | Polish a rough scene brief into a model-ready video prompt | `video-generate create-prompt` | tft-cli-models |
 | Animate a still using motion from a reference video | `motion-control` | tft-cli-models |
 | Speech, voice change, dubbing, SFX, transcription | `audio-generate` | tft-cli-models |
+
+For TTS or voice change, run `tft audio-generate voices` first to discover valid `--voice-id` values.
 | A reusable multi-step pipeline (node graph) | `flow-studio` | tft-cli-flow-studio |
 | Edit a timeline — clips, tracks, subtitles, story | `video-editor` | tft-cli-video-editor |
 | Character or product bible (preview + sheet) | `characters` | tft-cli-characters |
@@ -217,7 +284,7 @@ These skills work together for end-to-end edits:
 2. **Upload** — if the output is a local file, `tft files upload`; otherwise reuse the generation output URL
 3. **Edit timeline** — `tft video-editor` to create the project, add video/image/audio clips, tracks, subtitles (see **tft-cli-video-editor**)
 
-Example: `tft audio-generate text-to-speech` → upload MP3 → `createAsset` with `type:"audio"` on track 2, alongside video B-roll on track 1.
+Example: `tft audio-generate voices` → `tft audio-generate text-to-speech` → upload MP3 → `createAsset` with `type:"audio"` on track 2, alongside video B-roll on track 1.
 
 ### Flow requests — Flow Studio strict mode
 
